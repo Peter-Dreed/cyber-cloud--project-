@@ -16,13 +16,13 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Docker Login
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/home-html -f Portfolio-site/Site/Dockerfile ./Portfolio-site/Site
+        run: sudo docker build -t ${{ secrets.DOCKER_USERNAME }}/home-html -f Portfolio-site/Site/Dockerfile ./Portfolio-site/Site
 
       - name: Push Docker Image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/home-html
+        run: sudo docker push ${{ secrets.DOCKER_USERNAME }}/home-html
 
   deploy_to_ec2:
     name: Deploy to EC2 and Restart Container
@@ -42,17 +42,17 @@ jobs:
           ssh ${{ secrets.HOST_USERNAME }}@${{ secrets.HOST_ADDRESS }} <<'EOF'
 
             echo "Stopping existing container (if any)..."
-            docker stop html_container || true
-            docker rm html_container || true
+            sudo docker stop html_container || true
+            sudo docker rm html_container || true
 
             echo "Logging into Docker Hub..."
-            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
             echo "Pulling latest image..."
-            docker pull ${{ secrets.DOCKER_USERNAME }}/home-html
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/home-html
 
             echo "Running new container..."
-            docker run -d \
+            sudo docker run -d \
               --name html_container \
               -p 80:80 \
               ${{ secrets.DOCKER_USERNAME }}/home-html
