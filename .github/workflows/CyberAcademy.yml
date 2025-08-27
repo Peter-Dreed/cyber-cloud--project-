@@ -16,13 +16,13 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Docker Login
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/home-html -f Portfolio-site/Site/Dockerfile ./Portfolio-site/Site
+        run: sudo docker build -t ${{ secrets.DOCKER_USERNAME }}/home-html -f Portfolio-site/Site/Dockerfile ./Portfolio-site/Site
 
       - name: Push Docker Image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/home-html
+        run: sudo docker push ${{ secrets.DOCKER_USERNAME }}/home-html
 
   deploy_to_ec2:
     name: Deploy to EC2 and Restart HTML App
