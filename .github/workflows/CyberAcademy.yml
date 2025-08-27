@@ -1,4 +1,4 @@
-name: Self-Hosted CI/CD Pipeline for 
+name: CI/CD Pipeline for HTML Site
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   dockerize:
     name: Build and Push Docker Image
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
@@ -19,7 +19,7 @@ jobs:
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/home-html
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/home-html .
 
       - name: Push Docker Image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/home-html
@@ -42,20 +42,20 @@ jobs:
           ssh ${{ secrets.HOST_USERNAME }}@${{ secrets.HOST_ADDRESS }} <<'EOF'
 
             echo "Stopping existing container (if any)..."
-            docker stop portfolio_container || true
-            docker rm portfolio_container || true
+            docker stop home_html_container || true
+            docker rm home_html_container || true
 
             echo "Logging into Docker Hub..."
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
             echo "Pulling latest image..."
-            docker pull ${{ secrets.DOCKER_USERNAME }}/portfolio-site
+            docker pull ${{ secrets.DOCKER_USERNAME }}/home-html
 
             echo "Running new container..."
             docker run -d \
-              --name portfolio_container \
+              --name home_html_container \
               -p 80:80 \
-              ${{ secrets.DOCKER_USERNAME }}/portfolio-site
+              ${{ secrets.DOCKER_USERNAME }}/home-html
 
             echo "Checking if site is responding..."
             sleep 5
@@ -63,10 +63,7 @@ jobs:
               echo "Site is healthy ✅"
             else
               echo "Health check failed ❌ — dumping logs..."
-              docker logs portfolio_container
+              docker logs home_html_container
               exit 1
             fi
-
-            echo "Restarting Nginx (if using reverse proxy)..."
-            sudo systemctl restart nginx || true
           EOF
