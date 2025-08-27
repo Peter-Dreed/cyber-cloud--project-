@@ -39,7 +39,8 @@ jobs:
 
       - name: SSH and Deploy HTML Container
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.HOST_USERNAME }}@${{ secrets.HOST_ADDRESS }} <<EOF
+          ssh ${{ secrets.HOST_USERNAME }}@${{ secrets.HOST_ADDRESS }} <<'EOF'
+
             echo "Stopping existing container (if any)..."
             sudo docker stop html_container || true
             sudo docker rm html_container || true
@@ -57,4 +58,4 @@ jobs:
               ${{ secrets.DOCKER_USERNAME }}/home-html
 
             echo "Container deployed successfully!"
-EOF
+          EOF
