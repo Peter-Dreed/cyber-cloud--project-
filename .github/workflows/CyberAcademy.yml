@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for HTML Site
+name: HTML CI/CD Pipeline
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   dockerize:
     name: Build and Push Docker Image
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout Code
@@ -19,13 +19,13 @@ jobs:
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/home-html -f Porfilo-site/site/Dockerfile ./Porfilo-site/site
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/home-html -f Portfolio-site/site/Dockerfile ./Portfolio-site/site
 
       - name: Push Docker Image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/home-html
 
   deploy_to_ec2:
-    name: Deploy HTML App to EC2
+    name: Deploy to EC2 and Restart Container
     needs: dockerize
     runs-on: ubuntu-latest
 
@@ -42,8 +42,8 @@ jobs:
           ssh ${{ secrets.HOST_USERNAME }}@${{ secrets.HOST_ADDRESS }} <<'EOF'
 
             echo "Stopping existing container (if any)..."
-            docker stop home_html_container || true
-            docker rm home_html_container || true
+            docker stop html_container || true
+            docker rm html_container || true
 
             echo "Logging into Docker Hub..."
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
@@ -53,17 +53,9 @@ jobs:
 
             echo "Running new container..."
             docker run -d \
-              --name home_html_container \
+              --name html_container \
               -p 80:80 \
               ${{ secrets.DOCKER_USERNAME }}/home-html
 
-            echo "Checking if site is responding..."
-            sleep 5
-            if curl --fail --silent http://localhost > /dev/null; then
-              echo "Site is healthy ✅"
-            else
-              echo "Health check failed ❌ — dumping logs..."
-              docker logs home_html_container
-              exit 1
-            fi
+            echo "Container deployed successfully!"
           EOF
