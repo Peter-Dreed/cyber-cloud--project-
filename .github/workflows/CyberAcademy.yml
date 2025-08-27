@@ -33,23 +33,22 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.HOST_ADDRESS }} >> ~/.ssh/known_hosts
 
-      - name: Debug SSH Key
+      - name: Debug SSH key format
         run: |
-          echo "🔑 First two lines of SSH key:"
+          echo "🔑 First two lines of key:"
           head -n 2 ~/.ssh/id_rsa
-          echo "🔑 Last line of SSH key:"
+          echo "🔑 Last line of key:"
           tail -n 1 ~/.ssh/id_rsa
-          echo "✅ If you see 'BEGIN' and 'END', formatting is correct."
 
       - name: Test SSH Connection
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
             ${{ secrets.HOST_USERNAME }}@${{ secrets.HOST_ADDRESS }} \
-            "echo 'SSH Connection Successful ✅'"
+            "echo '✅ SSH Connection Successful'"
 
       - name: Deploy Docker Container
         run: |
